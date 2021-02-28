@@ -1,0 +1,5 @@
+include ':diff_gen_annotation'
+include ':diff_gen_compile'
+include ':annotation'
+include ':app'
+rootProject.name = "diffback-autogenera"
