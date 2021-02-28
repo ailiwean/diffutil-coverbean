@@ -94,8 +94,8 @@ public class GenAsynchHelper implements Gen {
      */
     public List<ParameterSpec> getAreParameter(PackInfo packInfo) {
         List<ParameterSpec> parameterSpecList = new ArrayList<>();
-        parameterSpecList.add(ParameterSpec.builder(getSuperTypeClass(packInfo), "oldItem").build());
-        parameterSpecList.add(ParameterSpec.builder(getSuperTypeClass(packInfo), "newItem").build());
+        parameterSpecList.add(ParameterSpec.builder(getDataTypeClass(packInfo), "oldItem").build());
+        parameterSpecList.add(ParameterSpec.builder(getDataTypeClass(packInfo), "newItem").build());
         return parameterSpecList;
     }
 
@@ -133,14 +133,14 @@ public class GenAsynchHelper implements Gen {
     public ParameterizedTypeName getSuperClass(PackInfo packInfo) {
         ClassName superName = ClassName.get("androidx.recyclerview.widget.DiffUtil", "ItemCallback");
         //带泛型
-        return ParameterizedTypeName.get(superName, getSuperTypeClass(packInfo));
+        return ParameterizedTypeName.get(superName, getDataTypeClass(packInfo));
     }
 
 
     /***
-     * 父类泛型类
+     * 数据类型
      */
-    public TypeName getSuperTypeClass(PackInfo packInfo) {
+    public TypeName getDataTypeClass(PackInfo packInfo) {
         return ClassName.get(packInfo.getPackName(), packInfo.getClassName());
     }
 

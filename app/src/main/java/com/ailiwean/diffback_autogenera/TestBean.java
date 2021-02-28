@@ -7,7 +7,7 @@ import com.ailiwean.diff_gen_annotation.DiffSynch;
 
 @DiffSynch
 @DiffAsynch
-public class T {
+public class TestBean {
 
     @DiffItem
     String ai;
@@ -20,6 +20,7 @@ public class T {
 
     int age;
 
+    @DiffItem
     String sex;
 
     public String getAi() {

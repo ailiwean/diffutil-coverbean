@@ -4,9 +4,11 @@ import com.ailiwean.diff_gen_annotation.DiffId;
 import com.ailiwean.diff_gen_annotation.DiffItem;
 import com.ailiwean.diff_gen_annotation.DiffSynch;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
@@ -67,14 +69,31 @@ public class GenSynchHelper implements Gen {
                 .superclass(getSuperClass(packInfo))
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addJavadoc(Constant.javaDoc)
+                .addField(getOldItems(packInfo))
+                .addField(getNewItems(packInfo))
                 .addMethod(getAreItemsTheSame(packInfo))
                 .addMethod(getAreContentsTheSame(packInfo))
                 .addMethod(getOldListSize(packInfo))
                 .addMethod(getNewListSize(packInfo))
+                .addMethod(getConstructorsMethod(packInfo))
                 .build();
 
         return JavaFile.builder(Constant.packName, typeSpec).build();
     }
+
+    /***
+     *  构造函数
+     */
+    public MethodSpec getConstructorsMethod(PackInfo packInfo) {
+        return MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(getListDataTypeClass(packInfo), "oldItems")
+                .addParameter(getListDataTypeClass(packInfo), "newItems")
+                .addStatement("this.$N = $N", "oldItems", "oldItems")
+                .addStatement("this.$N = $N", "newItems", "newItems")
+                .build();
+    }
+
 
     /***
      * areItemsTheSame方法
@@ -86,7 +105,8 @@ public class GenSynchHelper implements Gen {
                 .addAnnotation(Override.class)
                 .addParameters(getAreParameter(packInfo))
                 .addModifiers(Modifier.PUBLIC)
-                .addStatement("return $T.equals(oldItem." + packInfo.getIdFunName() + ", newItem."
+                .addStatement("return $T.equals(" + "oldItems.get(oldItemPosition)." +
+                        packInfo.getIdFunName() + ", newItems.get(newItemPosition)."
                         + packInfo.getIdFunName() + ")", textUtils)
                 .returns(boolean.class)
                 .build();
@@ -116,6 +136,8 @@ public class GenSynchHelper implements Gen {
                 .addParameters(getAreParameter(packInfo))
                 .addModifiers(Modifier.PUBLIC)
                 .returns(boolean.class);
+        builder.addStatement("$T oldItem = oldItems.get(oldItemPosition)", getDataTypeClass(packInfo));
+        builder.addStatement("$T newItem = newItems.get(newItemPosition)", getDataTypeClass(packInfo));
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("return ");
         for (int i = 0; i < packInfo.getItemSize(); i++) {
@@ -136,6 +158,7 @@ public class GenSynchHelper implements Gen {
         return MethodSpec.methodBuilder("getOldListSize")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
+                .addStatement("return oldItems != null ? oldItems.size() : 0")
                 .returns(int.class)
                 .build();
     }
@@ -146,6 +169,7 @@ public class GenSynchHelper implements Gen {
     public MethodSpec getNewListSize(PackInfo packInfo) {
         return MethodSpec.methodBuilder("getNewListSize")
                 .addAnnotation(Override.class)
+                .addStatement("return newItems != null ? newItems.size() : 0")
                 .addModifiers(Modifier.PUBLIC)
                 .returns(int.class)
                 .build();
@@ -160,10 +184,37 @@ public class GenSynchHelper implements Gen {
         return ClassName.get("androidx.recyclerview.widget.DiffUtil", "Callback");
     }
 
+
+    /***
+     *  oldItems
+     */
+    public FieldSpec getOldItems(PackInfo packInfo) {
+        return FieldSpec.builder(getListDataTypeClass(packInfo), "oldItems").build();
+    }
+
+
+    /***
+     * newItems
+     */
+    public FieldSpec getNewItems(PackInfo packInfo) {
+        return FieldSpec.builder(getListDataTypeClass(packInfo), "newItems").build();
+    }
+
+
+    /***
+     * List<数据类型>
+     */
+    public TypeName getListDataTypeClass(PackInfo packInfo) {
+        ClassName superName = ClassName.get("java.util", "List");
+        //带泛型
+        return ParameterizedTypeName.get(superName, getDataTypeClass(packInfo));
+    }
+
+
     /***
      * 数据类型
      */
-    public TypeName getSuperTypeClass(PackInfo packInfo) {
+    public TypeName getDataTypeClass(PackInfo packInfo) {
         return ClassName.get(packInfo.getPackName(), packInfo.getClassName());
     }
 
